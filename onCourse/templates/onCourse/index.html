@@ -1,0 +1,8 @@
+{% extends 'onCourse/base.html' %}
+{% block page_content %}
+    <h1>Welcome to the Learning Platform!</h1>
+    <p><a href="{% url 'onCourse:learner_progress' %}">Submit your progress</a></p>
+    <p><a href="{% url 'onCourse:learner_analytics' %}">View learner analytics</a></p>
+    <p><a href="{% url 'onCourse:comparative_analytics' %}">View comparative analytics</a></p>
+    <p><a href="{% url 'onCourse:all_learners_analytics' %}">View all learners analytics</a></p>
+{% endblock page_content %}

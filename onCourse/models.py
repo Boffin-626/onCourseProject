@@ -21,6 +21,17 @@ class Learner(models.Model):
     parent = models.ForeignKey('Parent', on_delete=models.CASCADE)
     school = models.ForeignKey('School', on_delete=models.CASCADE)
 
+class LearnerProgress(models.Model):
+    learner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progress')
+    concepts_grasped = models.TextField()
+    concepts_not_grasped = models.TextField()
+    period_start = models.DateField()
+    period_end = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = 'LearnerProgress'
+
 class ProgressReport(models.Model):
     learner = models.ForeignKey(Learner, on_delete=models.CASCADE)
     subject = models.CharField(max_length=100)

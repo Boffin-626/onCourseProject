@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import User, Learner, ProgressReport, Parent, School, Teacher, ConceptGrasp, USSDRequest, WhatsAppRequest
+from .models import User, Learner, LearnerProgress, ProgressReport, Parent, School, Teacher, ConceptGrasp, USSDRequest, WhatsAppRequest
 
 admin.site.register(User)
 admin.site.register(Learner)
+admin.site.register(LearnerProgress)
 admin.site.register(ProgressReport)
 admin.site.register(Parent)
 admin.site.register(School)
