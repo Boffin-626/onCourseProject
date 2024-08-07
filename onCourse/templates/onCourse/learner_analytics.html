@@ -1,0 +1,20 @@
+<!-- learner_analytics.html -->
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+    <h1>Learner Analytics</h1>
+    <ul>
+        {% for learner in learners %}
+            <li>{{ learner.username }}:
+                <ul>
+                    {% for progress in learner_progresses %}
+                        {% if progress.learner == learner %}
+                            <li>Concepts grasped: {{ progress.concepts_grasped }}</li>
+                            <li>Concepts not grasped: {{ progress.concepts_not_grasped }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock page_content %}

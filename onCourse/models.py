@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+import datetime
+from datetime import date, timedelta
 
 class User(AbstractUser):
     TYPE_LEARNER = 'learner'
@@ -16,17 +18,20 @@ class User(AbstractUser):
     user_permissions = models.ManyToManyField(Permission, related_name='oncourse_user_permissions')
 
 class Learner(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='learner')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='learner', default=1)
     name = models.CharField(max_length=100)
     parent = models.ForeignKey('Parent', on_delete=models.CASCADE)
     school = models.ForeignKey('School', on_delete=models.CASCADE)
+    
+def default_end_date():
+    return date.today() + timedelta(days=14)
 
 class LearnerProgress(models.Model):
     learner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progress')
     concepts_grasped = models.TextField()
     concepts_not_grasped = models.TextField()
-    period_start = models.DateField()
-    period_end = models.DateField()
+    period_start = models.DateField(default=datetime.date.today)
+    period_end = models.DateField(default=default_end_date)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
