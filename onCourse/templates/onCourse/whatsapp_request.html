@@ -1,0 +1,10 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+  <h2>WhatsApp Request for {{ parent.name }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Send Request</button>
+  </form>
+{% endblock page_content %}

@@ -1,0 +1,14 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<div class="jumbotron">
+  <h2>{{ parent.name }}'s Dashboard</h2>
+  <p>Phone Number: {{ parent.phone_number }}</p>
+  <p>Email: {{ parent.email }}</p>
+  <a href="{% url 'onCourse:ussd_request' %}">Dial *120*555# to get Progress Report via USSD</a>
+  <br>
+  <a href="#">Request Progress via WhatsApp</a>
+  <br>
+  <a href="{% url 'onCourse:view_learner_progress' %}">See Learner Progress</a>
+</div>
+{% endblock page_content %}

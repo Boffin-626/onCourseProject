@@ -1,0 +1,66 @@
+<!-- templates/view_learner_progress.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ learner.name }}'s Progress</title>
+    <style>
+        #report {
+          font-family: Arial, Helvetica, sans-serif;
+          border-collapse: collapse;
+          width: 100%;
+        }
+        
+        #report td, #report th {
+          border: 1px solid #ddd;
+          padding: 8px;
+        }
+        
+        #report tr:nth-child(even){background-color: #f2f2f2;}
+        
+        #report tr:hover {background-color: #ddd;}
+        
+        #report th {
+          padding-top: 12px;
+          padding-bottom: 12px;
+          text-align: left;
+          background-color: #04AA6D;
+          color: white;
+        }
+    </style>
+</head>
+<body>
+    <h3 style="text-align: center;">{{ learner.name }}'s Progress</h3>
+    <h4 style="text-align: center;">Last term average mark: 78% | <a href="#">Detailed Report</a></h4>
+    <h3>Parent: {{ parent.name }}</h3>
+
+    {% if progress_reports %}
+        <table id="report">
+            <thead>
+                <tr>
+                    <th>Period Start</th>
+                    <th>Period End</th>
+                    <th>Concepts Grasped</th>
+                    <th style="background: orange;">Concepts Not Grasped</th>
+                    <th>Date Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in progress_reports %}
+                    <tr>
+                        <td>{{ report.period_start }}</td>
+                        <td>{{ report.period_end }}</td>
+                        <td>{{ report.concepts_grasped }}</td>
+                        <td>{{ report.concepts_not_grasped }}</td>
+                        <td>{{ report.created_at }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No progress reports available for {{ learner.name }}.</p>
+    {% endif %}
+</body>
+</html>

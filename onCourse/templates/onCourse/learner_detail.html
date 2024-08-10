@@ -1,0 +1,29 @@
+<!-- templates/learner_detail.html -->
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+  <h2>{{ learner.name }}</h2>
+  <p><strong>Background Info:</strong> {{ learner.background_info }}</p>
+  
+  <h3>Progress Reports</h3>
+  {% for report in progress_reports %}
+    <div>
+      <p><strong>Period:</strong> {{ report.period_start }} - {{ report.period_end }}</p>
+      <p><strong>Concepts Grasped:</strong> {{ report.concepts_grasped }}</p>
+      <p><strong>Concepts Not Grasped:</strong> {{ report.concepts_not_grasped }}</p>
+      
+      <h4>Comments:</h4>
+      {% for comment in report.comments.all %}
+        <p><strong>{{ comment.teacher.username }}:</strong> {{ comment.comment }} ({{ comment.created_at }})</p>
+      {% endfor %}
+      
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="hidden" name="progress_report_id" value="{{ report.id }}">
+        <button type="submit">Add Comment</button>
+      </form>
+    </div>
+    <hr style="border-width: 4px; border-color: red;">
+  {% endfor %}
+{% endblock page_content %}

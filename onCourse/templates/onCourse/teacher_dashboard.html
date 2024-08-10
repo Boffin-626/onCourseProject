@@ -1,0 +1,11 @@
+<!-- templates/teacher_dashboard.html -->
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+  <h2>Teacher Dashboard</h2>
+  <ul>
+    {% for learner in learners %}
+      <li><a href="{% url 'onCourse:learner_detail' %}">{{ learner.name }}'s Progress Report</a></li>
+    {% endfor %}
+  </ul>
+{% endblock page_content %}

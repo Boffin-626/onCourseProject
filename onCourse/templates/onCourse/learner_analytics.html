@@ -1,20 +1,53 @@
-<!-- learner_analytics.html -->
 {% extends 'onCourse/base.html' %}
 
 {% block page_content %}
-    <h1>Learner Analytics</h1>
-    <ul>
-        {% for learner in learners %}
-            <li>{{ learner.username }}:
-                <ul>
-                    {% for progress in learner_progresses %}
-                        {% if progress.learner == learner %}
-                            <li>Concepts grasped: {{ progress.concepts_grasped }}</li>
-                            <li>Concepts not grasped: {{ progress.concepts_not_grasped }}</li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-            </li>
-        {% endfor %}
-    </ul>
+  <h1>Learner Progress Report</h1>
+  <ul>
+    {% for learner in learners %}
+        <li>{{ learner.name }} ({{ learner.email }})</li>
+    {% empty %}
+    <li>No learners found.</li>
+    {% endfor %}
+  </ul>
+  
+  <h3>Progress Report for {{ progress_report.period_start }} - {{ progress_report.period_end }}</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Subject</th>
+        <th>Concept</th>
+        <th>Grasped</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for progress in progress_report.progress %}
+      <tr>
+        <td>{{ progress.subject }}</td>
+        <td>{{ progress.concept }}</td>
+        <td>
+          {% if progress.grasped %}
+            <span class="text-success">Yes</span>
+          {% else %}
+            <span class="text-danger">No</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Concepts Grasped:</h3>
+  <ul>
+    {% for concept in progress_report.concepts_grasped %}
+    <li>{{ concept }}</li>
+    {% endfor %}
+  </ul>
+
+  <h3>Concepts Not Grasped:</h3>
+  <ul>
+    {% for concept in progress_report.concepts_not_grasped %}
+    <li>{{ concept }}</li>
+    {% endfor %}
+  </ul>
 {% endblock page_content %}

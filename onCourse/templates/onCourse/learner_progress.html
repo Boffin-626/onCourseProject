@@ -2,9 +2,10 @@
 {% extends 'onCourse/base.html' %}
 
 {% block page_content %}
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit</button>
-    </form>
+  <h2>{{ learner.name }}'s Progress</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit Progress</button>
+  </form>
 {% endblock page_content %}
