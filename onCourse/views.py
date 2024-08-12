@@ -1,42 +1,94 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Learner, LearnerProgress, USSDRequest, WhatsAppRequest, Parent, School, Teacher, TeacherComment, HOD
-from .forms import LearnerProgressForm, USSDRequestForm, WhatsAppRequestForm, TeacherCommentForm
+from .models import Learner, LearnerProgress, USSDRequest, WhatsAppRequest, Parent, School, Teacher, TeacherComment, HOD, Concept, Subject, Concept, District, DistrictOffice
+from .forms import LearnerProgressForm, ConceptGraspForm, USSDRequestForm, WhatsAppRequestForm, TeacherCommentForm
 
 from django.db.models import Sum, Count, Q, Avg
 from django.shortcuts import render
 from datetime import datetime
 
-import csv
 from django.http import HttpResponse
+
 
 def index(request):
     return render(request, 'onCourse/index.html')
 
-def learner_progress(request):
-    learner = get_object_or_404(Learner)
+def learner_progress_form(request, learner_id):
+    # Retrieve a single learner object or raise a 404 error if not found
+    learner = get_object_or_404(Learner, id=learner_id)
+
     if request.method == 'POST':
         form = LearnerProgressForm(request.POST)
         if form.is_valid():
             progress = form.save(commit=False)
             progress.learner = learner
             progress.save()
-            return redirect('onCourse:report_update')
+            # Redirect to a detail view or another page, passing the learner_id
+            return redirect('onCourse:learner_progress_detail', learner_id=learner_id)
     else:
+        # Initialize the form with the learner instance
         form = LearnerProgressForm()
-    context = {'learner': learner, 'form': form}
-    return render(request, 'onCourse/learner_progress.html', context)
+
+    context = {
+        'form': form, 
+        'learner': learner
+    }
+    return render(request, 'onCourse/learner_progress_form.html', context)
+
+def learner_progress_detail(request, learner_id):
+    learner = get_object_or_404(Learner, id=learner_id)
+    progress = LearnerProgress.objects.filter(learner=learner)
+    context = {
+        'learner': learner, 
+        'progress': progress
+    } 
+    return render(request, 'onCourse/learner_progress_detail.html', context)
+
+def learner_progress_list(request):
+    learners = Learner.objects.all()
+    context = {'learners': learners}
+    return render(request, 'onCourse/learner_progress_list.html', context)
+
+def get_concepts(request, subject_id):
+    concepts = Concept.objects.filter(subject_id=subject_id).values('id', 'name')
+    return JsonResponse(list(concepts), safe=False)
 
 def report_update(request):
     return render(request, 'onCourse/report_update.html')
 
+
+from django.shortcuts import render, get_object_or_404
+from .models import Teacher, LearnerProgress
+
 def teacher_dashboard(request):
-    # Example: Display all learners and their progress reports
-    learners = Learner.objects.all()
+    teacher = get_object_or_404(Teacher)
+    
+    # Fetch learners associated with this teacher
+    learners = teacher.learners.all()
+    
+    # Filter LearnerProgress records associated with the learners
+    learner_progress = LearnerProgress.objects.filter(learner__in=learners).select_related('learner', 'subject', 'concept')
+
+    # Apply filters based on GET parameters
+    if request.GET.get('subject'):
+        learner_progress = learner_progress.filter(subject__name=request.GET.get('subject'))
+    
+    if request.GET.get('grasp_level'):
+        learner_progress = learner_progress.filter(grasp_level=request.GET.get('grasp_level'))
+    
+    # Get distinct subjects for the dropdown
+    subjects = teacher.subjects.all()
+
     context = {
-        'learners': learners
+        'teacher': teacher,
+        'learner_progress': learner_progress,
+        'learners': learners,
+        'subjects': subjects,
     }
     return render(request, 'onCourse/teacher_dashboard.html', context)
+
+
+
 
 def learner_detail(request):
     learner = get_object_or_404(Learner)
@@ -64,8 +116,25 @@ def learner_detail(request):
 
 def parent_dashboard(request):
     parent = get_object_or_404(Parent)
-    context = {'parent': parent}
+    # Fetch learners associated with this parent
+    learners = parent.learners.all()
+    
+    # Filter LearnerProgress records associated with the learners
+    learner_progress = LearnerProgress.objects.filter(learner__in=learners).select_related('learner', 'subject', 'concept')
+
+    # Optionally, you can add filters for subjects, date ranges, etc.
+    if request.GET.get('subject'):
+        learner_progress = learner_progress.filter(subject__name=request.GET.get('subject'))
+    
+    if request.GET.get('grasp_level'):
+        learner_progress = learner_progress.filter(grasp_level=request.GET.get('grasp_level'))
+    context = {
+        'parent': parent,
+        'learner_progress': learner_progress,
+        'learners': learners,
+    }
     return render(request, 'onCourse/parent_dashboard.html', context)
+
 
 def view_learner_progress(request):
     parent = get_object_or_404(Parent)
@@ -113,12 +182,55 @@ def hod_dashboard(request):
     # Ensure request.user is used to get the HOD instance
     hod = get_object_or_404(HOD)
     school = hod.school
+
+    # Get filter parameters
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    subject_id = request.GET.get('subject')
+
+    # Initialize filters
+    filters = Q(learner__school=school)
+
+    # Apply date filters if provided
+    if start_date and end_date:
+        filters &= Q(created_at__range=[start_date, end_date])
+
+    # Apply subject filter if provided
+    if subject_id:
+        filters &= Q(subject_id=subject_id)
+
+    # Filter LearnerProgress records based on filters
+    learner_progress = LearnerProgress.objects.filter(filters)
+
+    # Calculate grasp level distribution
+    grasp_level_distribution = learner_progress.values('grasp_level').annotate(count=Count('grasp_level'))
+
+    # Aggregate grasp levels by subject
+    subject_grasp_levels = learner_progress.values('subject__name', 'grasp_level').annotate(count=Count('grasp_level'))
+
+    # Prepare subject options for filtering
+    subjects = Subject.objects.filter()
+
+    # Prepare context for the template
+    context = {
+        'school': school,
+        'learner_progress': learner_progress,
+        'grasp_level_distribution': grasp_level_distribution,
+        'subject_grasp_levels': subject_grasp_levels,
+        'subjects': subjects,
+    }
+    return render(request, 'onCourse/hod_dashboard.html', context)
+
+def district_dashboard(request):
+    district_office = get_object_or_404(DistrictOffice)
+    schools = School.objects.filter(district=district_office.district)
+
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     subject = request.GET.get('subject')
 
     # Initialize filters
-    filters = Q(learner__school=school)
+    filters = Q(learner__school__in=schools)
 
     # Apply date filters if provided
     if start_date and end_date:
@@ -128,61 +240,28 @@ def hod_dashboard(request):
 
     # Apply subject filters if provided
     if subject:
-        filters &= Q(concept__subject=subject)
+        filters &= Q(subject__name=subject)
 
     # Query learner progress with the applied filters
     learner_progress = LearnerProgress.objects.filter(filters)
-    teacher_comments = TeacherComment.objects.filter(progress_report__in=learner_progress)
 
-    # Additional Analytics Logic
-    total_learners = Learner.objects.filter(school=school).count()
-    avg_grasped = learner_progress.aggregate(Avg('concepts_grasped'))
-    avg_not_grasped = learner_progress.aggregate(Avg('concepts_not_grasped'))
+    # Aggregated data analytics for the district
+    total_learners = learner_progress.values('learner').distinct().count()
+    avg_grasp_level = learner_progress.aggregate(avg_grasp=Avg('grasp_level'))
+    learners_by_grasp_level = learner_progress.values('grasp_level').annotate(count=Count('id'))
 
-    total_concepts_grasped = learner_progress.aggregate(total_grasped=Sum('concepts_grasped'))
-    total_concepts_not_grasped = learner_progress.aggregate(total_not_grasped=Sum('concepts_not_grasped'))
-    total_concepts = (total_concepts_grasped['total_grasped'] or 0) + (total_concepts_not_grasped['total_not_grasped'] or 0)
+    # Retrieve subjects taught in the district
+    subjects = Subject.objects.filter(
+        id__in=learner_progress.values_list('subject_id', flat=True)
+    ).distinct()
 
-    grasped_percentage = (total_concepts_grasped['total_grasped'] / total_concepts) * 100 if total_concepts else 0
-    not_grasped_percentage = (total_concepts_not_grasped['total_not_grasped'] / total_concepts) * 100 if total_concepts else 0
-
-    comments_per_learner = teacher_comments.values('progress_report__learner').annotate(total_comments=Count('id'))
-
-    # Prepare subject options for filtering
-    subjects = learner_progress.values_list('subject', flat=True).distinct()
-
-    # Prepare context for the template
     context = {
-        'school': school,
-        'learner_progress': learner_progress,
-        'teacher_comments': teacher_comments,
-        'avg_grasped': avg_grasped['concepts_grasped__avg'],
-        'avg_not_grasped': avg_not_grasped['concepts_not_grasped__avg'],
-        'grasped_percentage': grasped_percentage,
-        'not_grasped_percentage': not_grasped_percentage,
-        'comments_per_learner': comments_per_learner,
+        'schools': schools,
+        'total_learners': total_learners,
+        'avg_grasp_level': avg_grasp_level['avg_grasp'],
+        'learners_by_grasp_level': learners_by_grasp_level,
         'subjects': subjects,
     }
-    return render(request, 'onCourse/hod_dashboard.html', context)
-
-def export_to_csv(request):
-    # Create a response object that can be used to write CSV data
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="learner_progress.csv"'
-
-    # Create a CSV writer object
-    writer = csv.writer(response)
-
-    # Write the header row
-    writer.writerow(['Learner', 'Concepts Grasped', 'Concepts Not Grasped', 'Date'])
-
-    # Query the database for learner progress data
-    learner_progress = LearnerProgress.objects.all()
-
-    # Write data rows
-    for progress in learner_progress:
-        writer.writerow([progress.learner.user.username, progress.concepts_grasped, progress.concepts_not_grasped, progress.created_at])
-
-    return response
+    return render(request, 'onCourse/district_dashboard.html', context)
 
 

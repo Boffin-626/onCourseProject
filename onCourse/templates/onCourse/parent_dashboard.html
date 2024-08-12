@@ -1,14 +1,85 @@
 {% extends 'onCourse/base.html' %}
+<head>
+<style>
+  #report {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  #report td, #report th {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  #report tr:nth-child(even){background-color: rgb(15, 24, 41);}
+  
+  #report tr:hover {background-color: #ddd;}
+  
+  #report th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: rgb(15, 24, 41);;
+    color: white;
+  }
+</style>
+</head>
 
 {% block page_content %}
 <div class="jumbotron">
   <h2>{{ parent.name }}'s Dashboard</h2>
-  <p>Phone Number: {{ parent.phone_number }}</p>
-  <p>Email: {{ parent.email }}</p>
-  <a href="{% url 'onCourse:ussd_request' %}">Dial *120*555# to get Progress Report via USSD</a>
-  <br>
-  <a href="#">Request Progress via WhatsApp</a>
-  <br>
-  <a href="{% url 'onCourse:view_learner_progress' %}">See Learner Progress</a>
+  <p style="text-align:center; background: #fff; padding: 5px;">Last Term's Average %: 78 | <a href="#">Detailed Report</a>
+
+  <form method="GET" action="">
+      <label for="learner">Select Learner:</label>
+      <select name="learner" id="learner">
+          <option value="">All Learners</option>
+          {% for learner in learners %}
+              <option value="{{ learner.id }}">{{ learner.name }}</option>
+          {% endfor %}
+      </select>
+
+      <label for="subject">Filter by Subject:</label>
+      <select name="subject" id="subject">
+          <option value="">All Subjects</option>
+          {% for progress in learner_progress %}
+              <option value="{{ progress.subject.name }}">{{ progress.subject.name }}</option>
+          {% endfor %}
+      </select>
+      
+      <label for="grasp_level">Filter by Grasp Level:</label>
+      <select name="grasp_level" id="grasp_level">
+          <option value="">All Levels</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+      </select>
+      
+      <button type="submit">Apply Filters</button>
+  </form>
+
+  <table id="report">
+      <thead>
+          <tr>
+              <th>Learner</th>
+              <th>Subject</th>
+              <th>Concept</th>
+              <th>Grasp Level</th>
+              <th>Period</th>
+          </tr>
+      </thead>
+      <tbody>
+          {% for progress in learner_progress %}
+          <tr>
+              <td>{{ progress.learner.name }}</td>
+              <td>{{ progress.subject.name }}</td>
+              <td>{{ progress.concept.name }}</td>
+              <td>{{ progress.get_grasp_level_display }}</td>
+              <td>{{ progress.period_start }} - {{ progress.period_end }}</td>
+          </tr>
+          {% endfor %}
+      </tbody>
+  </table>
 </div>
 {% endblock page_content %}

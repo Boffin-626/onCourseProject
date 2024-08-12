@@ -23,7 +23,7 @@
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link bg-primary mr-1 pr-1" href="{% url 'onCourse:index' %}">Learner-Dashboard</a>
+                    <a class="nav-link bg-primary mr-1 pr-1" href="#">Learner-Progress Update</a>
                 </li>
                 <li class="nav-item mr-1 pr-1">
                     <a class="nav-link bg-danger" href="{% url 'onCourse:parent_dashboard' %}">Parent-Dashboard</a>
@@ -38,7 +38,7 @@
                     <a class="nav-link bg-warning" href="{% url 'onCourse:hod_dashboard' %}">HOD-Dashboard</a></li>
                 </li>
                 <li class="nav-item mr-1 pr-1">
-                    <a class="nav-link bg-danger" href="{% url 'onCourse:teacher_dashboard' %}">DistrictOffice-Dashboard</a></li>
+                    <a class="nav-link bg-danger" href="{% url 'onCourse:district_dashboard' %}">DistrictOffice-Dashboard</a></li>
                 </li>
                 {% if user.is_authenticated %}
                 <li class="nav-item">

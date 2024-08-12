@@ -1,11 +1,80 @@
-<!-- templates/teacher_dashboard.html -->
 {% extends 'onCourse/base.html' %}
 
 {% block page_content %}
-  <h2>Teacher Dashboard</h2>
-  <ul>
-    {% for learner in learners %}
-      <li><a href="{% url 'onCourse:learner_detail' %}">{{ learner.name }}'s Progress Report</a></li>
-    {% endfor %}
-  </ul>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <h2 class="mb-4">{{ teacher.name }}'s Dashboard</h2>
+        </div>
+    </div>
+
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="GET" action="" class="form-inline justify-content-center">
+                        <div class="form-group mx-sm-3 mb-2">
+                            <label for="subject" class="mr-2">Filter by Subject:</label>
+                            <select name="subject" id="subject" class="form-control">
+                                <option value="">All Subjects</option>
+                                {% for subject in subjects %}
+                                    <option value="{{ subject.name }}">{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group mx-sm-3 mb-2">
+                            <label for="grasp_level" class="mr-2">Filter by Grasp Level:</label>
+                            <select name="grasp_level" id="grasp_level" class="form-control">
+                                <option value="">All Levels</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary mb-2">Apply Filters</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Learner</th>
+                                <th scope="col">Subject</th>
+                                <th scope="col">Concept</th>
+                                <th scope="col">Grasp Level</th>
+                                <th scope="col">Period</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for progress in learner_progress %}
+                            <tr>
+                                <td>{{ progress.learner.name }}</td>
+                                <td>{{ progress.subject.name }}</td>
+                                <td>{{ progress.concept.name }}</td>
+                                <td>
+                                    {% if progress.grasp_level == 'low' %}
+                                        <span class="badge bg-danger">{{ progress.get_grasp_level_display }}</span>
+                                    {% elif progress.grasp_level == 'medium' %}
+                                        <span class="badge bg-warning">{{ progress.get_grasp_level_display }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ progress.get_grasp_level_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ progress.period_start|date:"d M Y" }} - {{ progress.period_end|date:"d M Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock page_content %}

@@ -9,8 +9,6 @@
   {% for report in progress_reports %}
     <div>
       <p><strong>Period:</strong> {{ report.period_start }} - {{ report.period_end }}</p>
-      <p><strong>Concepts Grasped:</strong> {{ report.concepts_grasped }}</p>
-      <p><strong>Concepts Not Grasped:</strong> {{ report.concepts_not_grasped }}</p>
       
       <h4>Comments:</h4>
       {% for comment in report.comments.all %}

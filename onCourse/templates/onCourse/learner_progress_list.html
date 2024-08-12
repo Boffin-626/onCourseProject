@@ -1,0 +1,20 @@
+{% extends 'onCourse/base.html' %}
+{% load static %}
+{% block page_content %}
+    <div class="jumbotron">
+        <h4>Learner Progress List</h4>
+        <ul>
+        {% for learner in learners %}
+        <li>
+            <strong>{{ learner.name }}</strong> <!-- Display the learner's name -->
+            <a href="{% url 'onCourse:learner_progress_form' learner_id=learner.id %}">View/Edit Progress</a>
+        </li>
+        {% empty %}
+        <li>No learners found.</li>
+        {% endfor %}
+        </ul>
+        <a href="{% url 'onCourse:index' %}">Back to Home</a>
+    </div>
+{% endblock page_content %}
+
+

@@ -1,6 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, Group, Permission, User
-import datetime
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from datetime import date, timedelta
 
 class User(AbstractUser):
@@ -17,11 +16,57 @@ class User(AbstractUser):
     groups = models.ManyToManyField(Group, related_name='oncourse_user_groups', blank=True)
     user_permissions = models.ManyToManyField(Permission, related_name='oncourse_user_permissions')
 
+class District(models.Model):
+    name = models.CharField(max_length=255)
+    region = models.CharField(max_length=255)  # Optional: Define a region or area the district covers
+
+    def __str__(self):
+        return self.name
+
+class School(models.Model):
+    name = models.CharField(max_length=255)
+    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name='schools')
+    address = models.CharField(max_length=255)
+    principal = models.CharField(max_length=255)
+    contact_email = models.EmailField()
+
+    def __str__(self):
+        return self.name
+
+class Subject(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Teacher(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='teacher')
+    name = models.CharField(max_length=100)
+    subjects = models.ManyToManyField(Subject, related_name='teachers')
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+class Concept(models.Model):
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.name} ({self.subject.name})"
+
+class Parent(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='parent')
+    name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=20)
+    email = models.EmailField()
+
 class Learner(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='learner')
     name = models.CharField(max_length=100)
-    parent = models.ForeignKey('Parent', on_delete=models.CASCADE)
+    parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='learners')
     school = models.ForeignKey('School', on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, related_name='learners', on_delete=models.CASCADE)
     background_info = models.TextField(blank=True, null=True)
     
     def __str__(self):
@@ -30,40 +75,45 @@ class Learner(models.Model):
 def default_end_date():
     return date.today() + timedelta(days=14)
 
+class ConceptGrasp(models.Model):
+    learner = models.ForeignKey(Learner, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    concept = models.ForeignKey(Concept, on_delete=models.CASCADE)
+    grasped = models.BooleanField(default=False)
+    grasp_level = models.Choices
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.learner.name} - {self.concept.name} ({'Grasped' if self.grasped else 'Not Grasped'})"
+
 class LearnerProgress(models.Model):
+    LOW = 'low'
+    MEDIUM = 'medium'
+    HIGH = 'high'
+
+    GRASP_LEVEL_CHOICES = [
+        (LOW, 'Low'),
+        (MEDIUM, 'Medium'),
+        (HIGH, 'High'),
+    ]
+
     learner = models.ForeignKey(Learner, on_delete=models.CASCADE, related_name='progress')
-    subject = models.CharField(max_length=100, default="subject")
-    concepts_grasped = models.TextField()
-    concepts_not_grasped = models.TextField(blank=True)
-    period_start = models.DateField(default=datetime.date.today)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    concept = models.ForeignKey(Concept, on_delete=models.CASCADE)
+    grasp_level = models.CharField(
+        max_length=6,
+        choices=GRASP_LEVEL_CHOICES,
+        default=LOW,
+    )
+    period_start = models.DateField(default=date.today)
     period_end = models.DateField(default=default_end_date)
     created_at = models.DateTimeField(auto_now_add=True)
-    #updated_at = models.DateTimeField(auto_now=True)
-    #comments = models.CharField(max_length=250, blank=True, null=True)
-    
+
     class Meta:
         verbose_name_plural = 'LearnerProgress'
-
-class Parent(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='parent')
-    name = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=20)
-    email = models.EmailField()
-
-class School(models.Model):
-    name = models.CharField(max_length=100)
-    address = models.CharField(max_length=200)
     
     def __str__(self):
-        return self.name
-
-class Teacher(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='teacher')
-    name = models.CharField(max_length=100)
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
+        return self.grasp_level
 
 class TeacherComment(models.Model):
     progress_report = models.ForeignKey(LearnerProgress, on_delete=models.CASCADE, related_name='comments')
@@ -71,12 +121,15 @@ class TeacherComment(models.Model):
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-class ConceptGrasp(models.Model):
-    learner = models.ForeignKey(Learner, on_delete=models.CASCADE)
-    subject = models.CharField(max_length=100)
-    concept = models.CharField(max_length=100)
-    grasped = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+class DistrictOffice(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    district = models.OneToOneField(District, on_delete=models.CASCADE, related_name='office')
+    head = models.CharField(max_length=255)  # Head of the district office
+    contact_email = models.EmailField(default='example@example.com')
+    contact_phone = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"{self.district.name} Office"
 
 class USSDRequest(models.Model):
     parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
@@ -98,3 +151,6 @@ class HOD(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.school.name}'
+
+from django.db import models
+

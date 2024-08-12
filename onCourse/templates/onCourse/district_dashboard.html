@@ -1,0 +1,47 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<div class="jumbotron">
+    <h3>District Dashboard</h3>
+
+    <h4>Schools in District</h4>
+    <ul>
+        {% for school in schools %}
+            <li>{{ school.name }}</li>
+        {% endfor %}
+    </ul>
+
+    <h4>Analytics</h4>
+    <p>Total Learners in District: {{ total_learners }}</p>
+    <p>Average Grasp Level: {{ avg_grasp_level }}</p>
+
+    <h4>Grasp Level Distribution</h4>
+    <ul>
+        {% for grasp in learners_by_grasp_level %}
+            <li>{{ grasp.grasp_level }}: {{ grasp.count }}</li>
+        {% endfor %}
+    </ul>
+
+    <h5>Filter by Subject</h5>
+    <form method="get">
+        <label for="subject">Select Subject:</label>
+        <select name="subject" id="subject">
+            {% for subject in subjects %}
+                <option value="{{ subject }}">{{ subject }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+
+    <h5>Date Range</h5>
+    <form method="get">
+        <label for="start_date">Start Date:</label>
+        <input type="date" name="start_date" id="start_date">
+        
+        <label for="end_date">End Date:</label>
+        <input type="date" name="end_date" id="end_date">
+
+        <button type="submit">Filter</button>
+    </form>
+</div>
+{% endblock page_content %}
