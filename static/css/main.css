@@ -1,12 +1,7 @@
 body {
     background-color: rgb(15, 24, 41);
-    color: #fff;
 }
-
-a {
-    color: #fff; 
-}
-
+/* All tables styling section */
 #report {
     font-family: Arial, Helvetica, sans-serif;
     border-collapse: collapse;
@@ -18,14 +13,85 @@ a {
     padding: 8px;
 }
         
-#report tr:nth-child(even){background-color: #f2f2f2;}
+#report tr:nth-child(even){background-color: #fff;}
         
-#report tr:hover {background-color: #ddd;}
+#report tr:hover {background-color: grey;}
         
 #report th {
     padding-top: 12px;
     padding-bottom: 12px;
     text-align: left;
+    background-color: lightslategrey;
+    color: #fff;
+}
+/* HOD Correspondence Table */
+#messages-table {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#messages-table td, #messages-table th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+        
+#messages-table tr:nth-child(even){background-color: pink;}
+        
+#messages-table tr:hover {background-color: transparent;}
+        
+#messages-table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
     background-color: #04AA6D;
+    color: red;
+}
+
+/* HOD Section Styling */
+.card { margin-bottom: 20px; }
+.dashboard-title { margin-bottom: 20px; text-align: center; }
+.table-wrapper { margin-top: 30px; }
+.chart-container { margin-top: 50px; }
+.footer { background-color: #343a40; color: #ffffff; padding: 20px 0; margin-top: 50px; }
+.footer a { color: #ffffff; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+.footer h5 { margin-bottom: 20px; }
+.filter-section { margin-top: 20px; margin-bottom: 20px; }
+
+/* Learner Progress Form and Concept Quiz Styling */
+h1 {
+    color: #343a40;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.form-control {
+    border-radius: 5px;
+}
+
+.btn-primary, .btn-success {
+    border-radius: 5px;
+    padding: 10px 20px;
+}
+
+.footer {
+    background-color: #343a40;
     color: white;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.footer .text-muted {
+    color: #ced4da;
 }

@@ -1,11 +1,55 @@
-<!-- onCourse/learner_progress_form.html -->
 {% extends 'onCourse/base.html' %}
 
 {% block page_content %}
-  <h3>Update Progress for {{ learner.name }}</h3>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Submit Progress</button>
-  </form>
+<div class="row text-white">
+    <div class="col-lg-8 mx-auto">
+        <h3 class="text-warning">Update Your Progress</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="subject">Select Subject:</label>
+                <select id="subject" name="subject" class="form-control" required>
+                    <option value="">Select Subject</option>
+                    {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_concept">Select Concept:</label>
+                {{ form.concept }}
+            </div>
+            <div class="form-group">
+                <label for="id_grasp_level">Your Grasp Level:</label>
+                {{ form.grasp_level }}
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Progress</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('subject').addEventListener('change', function() {
+        var subjectId = this.value;
+        var url = '{% url "onCourse:load_concepts" %}';
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url + '?subject=' + subjectId, true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    var concepts = JSON.parse(xhr.responseText);
+                    var conceptSelect = document.getElementById('id_concept');
+                    conceptSelect.innerHTML = '<option value="">Select Concept</option>';
+                    for (var i = 0; i < concepts.length; i++) {
+                        var option = document.createElement('option');
+                        option.value = concepts[i].id;
+                        option.text = concepts[i].name;
+                        conceptSelect.appendChild(option);
+                    }
+                }
+            }
+        };
+        xhr.send();
+    });
+</script>
 {% endblock page_content %}

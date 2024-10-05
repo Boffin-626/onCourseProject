@@ -1,0 +1,24 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_header %}
+<h4 class="text-info">School Calendar</h4>
+{% endblock page_header %}
+
+{% block page_content %}
+<div class="container">
+    <div class="row">
+        {% for event in events %}
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body bg-dark">
+                    <h5 class="card-title text-light">{{ event.title }}</h5>
+                    <p class="card-text text-info">{{ event.description }}</p>
+                    <p class="card-text text-warning"><small class="text-muted">From: {{ event.start_date|date:"F d, Y H:i" }}</small></p>
+                    <p class="card-text"><small class="text-muted">To: {{ event.end_date|date:"F d, Y H:i" }}</small></p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock page_content %}

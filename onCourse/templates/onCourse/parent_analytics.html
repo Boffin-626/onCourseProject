@@ -1,0 +1,29 @@
+{% extends 'onCourse/base.html' %}
+{% block page_content %}
+
+<div class="analytics-container">
+    <h2>Performance Analytics for {{ learner.name }}</h2>
+    <p>Average Score: {{ analytics.average_score }}</p>
+    <p>Predicted Score: {{ analytics.predicted_score }}</p>
+    <p>Comparison to Average: {{ analytics.comparison_to_average }}</p>
+    <p>Predicted Future Score: {{ predicted_score }}</p>
+    <canvas id="performanceChart"></canvas>
+</div>
+
+<script>
+    // Example of using Chart.js to display a line chart of performance
+    var ctx = document.getElementById('performanceChart').getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['January', 'February', 'March', 'April'], // example data
+            datasets: [{
+                label: 'Performance',
+                data: [12, 19, 3, 5], // example data
+                borderColor: 'rgba(75, 192, 192, 1)',
+                fill: false
+            }]
+        }
+    });
+</script>
+{% endblock page_content %}

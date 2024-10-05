@@ -1,0 +1,43 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<h4>Submit Your Answers</h4>
+
+<form method="POST" action="{% url 'onCourse:submit_answers' %}">
+    {% csrf_token %}
+    
+    <div class="question-block">
+        <h5>Concept: {{ concept.name }}</h5>
+        
+        <!-- First Question -->
+        <div class="question">
+            <p>{{ concept.question1.text }}</p>
+            {% for choice in concept.question1.choices.all %}
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="question1" id="q1_{{ choice.id }}" value="{{ choice.id }}">
+                <label class="form-check-label" for="q1_{{ choice.id }}">
+                    {{ choice.text }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Second Question -->
+        <div class="question">
+            <p>{{ concept.question2.text }}</p>
+            {% for choice in concept.question2.choices.all %}
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="question2" id="q2_{{ choice.id }}" value="{{ choice.id }}">
+                <label class="form-check-label" for="q2_{{ choice.id }}">
+                    {{ choice.text }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Submit Answers</button>
+</form>
+
+{% endblock page_content %}

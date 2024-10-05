@@ -1,42 +1,146 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Learner, LearnerProgress, USSDRequest, WhatsAppRequest, Parent, School, Teacher, TeacherComment, HOD, Concept, Subject, Concept, District, DistrictOffice
-from .forms import LearnerProgressForm, ConceptGraspForm, USSDRequestForm, WhatsAppRequestForm, TeacherCommentForm
+from .models import *
+from .forms import *
 
 from django.db.models import Sum, Count, Q, Avg
 from django.shortcuts import render
 from datetime import datetime
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.utils.dateparse import parse_date
 
+from django.contrib.auth import get_user_model
+from django.db.models import Avg
+
+from django.views.decorators.csrf import csrf_exempt
+import africastalking
+from twilio.twiml.messaging_response import MessagingResponse
+
+from django.conf import settings
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import joblib
+import pandas as pd
+import numpy as np
+
+from .image_processor import extract_text_from_image, parse_report_data, save_report_data
+
+User = get_user_model()
 
 def index(request):
-    return render(request, 'onCourse/index.html')
+    user = request.user
+    context = {
+        'is_learner': user.groups.filter(name='Learner').exists(),
+        'is_parent': user.groups.filter(name='Parent').exists(),
+        'is_teacher': user.groups.filter(name='Teacher').exists(),
+        'is_hod': user.groups.filter(name='HOD').exists(),
+        'is_district': user.groups.filter(name='District').exists(),
+    }
+    return render(request, 'onCourse/index.html', context)
 
-def learner_progress_form(request, learner_id):
-    # Retrieve a single learner object or raise a 404 error if not found
-    learner = get_object_or_404(Learner, id=learner_id)
+def add_learner_info(request):
+    if request.method == 'POST':
+        form = LearnerInfoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('onCourse:learner_info_list')  # Redirect to the list of learners after submission
+    else:
+        form = LearnerInfoForm()
+    context = {'form': form}
+    return render(request, 'onCourse/add_learner_info.html', context)
 
+def learner_info_list(request):
+    learners = LearnerInfo.objects.all()
+    context = {'learners': learners}
+    return render(request, 'onCourse/learner_info_list.html', context)
+
+def learner_dashboard(request):
+    return render(request, 'onCourse/learner_dashboard.html')
+
+def my_rewards(request):
+    pass
+
+def achievements(request):
+    pass
+
+def learning_materials(request):
+    pass
+
+def calendar(request):
+    events = SchoolEvent.objects.all()  # Fetch all events
+    context = {
+        'events': events,  # Pass the events to the template
+    }
+    return render(request, 'onCourse/calendar.html', context)
+
+def learner_progress_form(request):
     if request.method == 'POST':
         form = LearnerProgressForm(request.POST)
         if form.is_valid():
-            progress = form.save(commit=False)
-            progress.learner = learner
-            progress.save()
-            # Redirect to a detail view or another page, passing the learner_id
-            return redirect('onCourse:learner_progress_detail', learner_id=learner_id)
+            learner_progress = form.save(commit=False)
+            learner_progress.learner = request.user.learner  # Assuming learner is related to User
+            learner_progress.save()
+            return redirect('onCourse:learner_dashboard')  # Redirect to learner dashboard after saving
     else:
-        # Initialize the form with the learner instance
         form = LearnerProgressForm()
 
     context = {
-        'form': form, 
-        'learner': learner
+        'form': form,
     }
     return render(request, 'onCourse/learner_progress_form.html', context)
 
-def learner_progress_detail(request, learner_id):
-    learner = get_object_or_404(Learner, id=learner_id)
+def upload_report(request):
+    # Assuming report_data is extracted correctly from the request
+    report_data = extract_data_from_request(request)  # Placeholder for your extraction logic
+    result = save_report_data(report_data)
+
+    if result['learner']:
+        # If learner is identified, we can access the learner's name
+        return HttpResponse(f"Learner Grade for {result['learner'].name} saved successfully.")
+    else:
+        # Handle unidentified learner case
+        if result['status'] == 'unidentified':
+            return HttpResponse(f"Unidentified learner's report saved with grade: {result['grade']}.")
+        elif result['status'] == 'not found':
+            return HttpResponse(f"Report processed but learner '{report_data.get('learner_name')}' not found.")
+
+def report_uploaded(request):
+    return render(request, 'onCouse/report_uploaded.html')
+
+def load_concepts(request):
+    subject_id = request.GET.get('subject')
+    concepts = Concept.objects.filter(subject_id=subject_id).order_by('name')
+    return JsonResponse(list(concepts.values('id', 'name')), safe=False)
+
+def concept_quiz(request, concept_id):
+    concept = get_object_or_404(Concept, id=concept_id)
+    questions = Question.objects.filter(concept=concept)[:2]
+
+    if request.method == 'POST':
+        total_score = 0
+        for question in questions:
+            selected_answer_id = request.POST.get(f'question-{question.id}')
+            selected_answer = get_object_or_404(Answer, id=selected_answer_id)
+            if selected_answer.is_correct:
+                total_score += 1
+
+        grasp_level = 'low' if total_score == 0 else 'medium' if total_score == 1 else 'high'
+        LearnerProgress.objects.create(learner=request.user, concept=concept, grasp_level=grasp_level, score=total_score)
+
+        return redirect('onCourse:learner_dashboard')
+    context = {'concept': concept, 'questions': questions}
+    return render(request, 'onCourse/concept_quiz.html', context)
+
+def load_questions(request):
+    concept_id = request.GET.get('concept')
+    questions = Question.objects.filter(concept_id=concept_id)
+    return render(request, 'onCourse/load_questions.html', {'questions': questions})
+
+def learner_progress_detail(request):
+    learner = get_object_or_404(Learner)
     progress = LearnerProgress.objects.filter(learner=learner)
     context = {
         'learner': learner, 
@@ -56,11 +160,10 @@ def get_concepts(request, subject_id):
 def report_update(request):
     return render(request, 'onCourse/report_update.html')
 
-
-from django.shortcuts import render, get_object_or_404
-from .models import Teacher, LearnerProgress
-
 def teacher_dashboard(request):
+    return render(request, 'onCourse/teacher_dashboard.html')
+
+def teacher_views(request):
     teacher = get_object_or_404(Teacher)
     
     # Fetch learners associated with this teacher
@@ -85,10 +188,7 @@ def teacher_dashboard(request):
         'learners': learners,
         'subjects': subjects,
     }
-    return render(request, 'onCourse/teacher_dashboard.html', context)
-
-
-
+    return render(request, 'onCourse/teacher_views.html', context)
 
 def learner_detail(request):
     learner = get_object_or_404(Learner)
@@ -111,10 +211,12 @@ def learner_detail(request):
         'progress_reports': progress_reports,
         'form': form,
     }
-    
     return render(request, 'onCourse/learner_detail.html', context)
 
 def parent_dashboard(request):
+    return render(request, 'onCourse/parent_dashboard.html')
+
+def parent_views(request):
     parent = get_object_or_404(Parent)
     # Fetch learners associated with this parent
     learners = parent.learners.all()
@@ -133,8 +235,7 @@ def parent_dashboard(request):
         'learner_progress': learner_progress,
         'learners': learners,
     }
-    return render(request, 'onCourse/parent_dashboard.html', context)
-
+    return render(request, 'onCourse/parent_views.html', context)
 
 def view_learner_progress(request):
     parent = get_object_or_404(Parent)
@@ -179,89 +280,208 @@ def whatsapp_request(request, parent_id):
     return render(request, 'onCourse/whatsapp_request.html', context)
 
 def hod_dashboard(request):
-    # Ensure request.user is used to get the HOD instance
-    hod = get_object_or_404(HOD)
-    school = hod.school
+    return render(request, 'onCourse/hod_dashboard.html')
 
-    # Get filter parameters
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    subject_id = request.GET.get('subject')
+def hod_views(request):
+    # Existing context setup
+    total_learners = LearnerProgress.objects.values('learner').distinct().count()
+    total_grasp_levels = LearnerProgress.objects.aggregate(avg_grasp_level=Avg('grasp_level'))
+    reports_submitted = LearnerProgress.objects.count()
+    
+    subjects = Subject.objects.all()
+    learner_progress = LearnerProgress.objects.select_related('learner', 'subject', 'concept').all()
 
-    # Initialize filters
-    filters = Q(learner__school=school)
+    underperforming_learners = learner_progress.filter(grasp_level='low').count()
 
-    # Apply date filters if provided
-    if start_date and end_date:
-        filters &= Q(created_at__range=[start_date, end_date])
+    # Handle message form submission
+    if request.method == 'POST':
+        form = HODMessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.hod = User.objects.get()  # Resolving SimpleLazyObject issue
+            message.save()
+            return redirect('onCourse:hod_dashboard')
+    else:
+        form = HODMessageForm()
 
-    # Apply subject filter if provided
-    if subject_id:
-        filters &= Q(subject_id=subject_id)
-
-    # Filter LearnerProgress records based on filters
-    learner_progress = LearnerProgress.objects.filter(filters)
-
-    # Calculate grasp level distribution
-    grasp_level_distribution = learner_progress.values('grasp_level').annotate(count=Count('grasp_level'))
-
-    # Aggregate grasp levels by subject
-    subject_grasp_levels = learner_progress.values('subject__name', 'grasp_level').annotate(count=Count('grasp_level'))
-
-    # Prepare subject options for filtering
-    subjects = Subject.objects.filter()
-
-    # Prepare context for the template
     context = {
-        'school': school,
-        'learner_progress': learner_progress,
-        'grasp_level_distribution': grasp_level_distribution,
-        'subject_grasp_levels': subject_grasp_levels,
+        'total_learners': total_learners,
+        'average_performance': total_grasp_levels.get('avg_grasp_level', 0),
+        'reports_submitted': reports_submitted,
         'subjects': subjects,
+        'learner_progress': learner_progress,
+        'underperforming_learners': underperforming_learners,
+        'form': form,
     }
-    return render(request, 'onCourse/hod_dashboard.html', context)
+    return render(request, 'onCourse/hod_views.html', context)
+
+def HOD_Correspondence(request):
+    messages = HODMessage.objects.filter()
+    context = {'messages': messages}
+    return render(request, 'onCourse/HOD_Correspondence.html', context)
 
 def district_dashboard(request):
-    district_office = get_object_or_404(DistrictOffice)
-    schools = School.objects.filter(district=district_office.district)
+    return render(request, 'onCourse/district_dashboard.html')
 
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    subject = request.GET.get('subject')
+def district_views(request):
+    # Get filter parameters
+    school_id = request.GET.get('schoolFilter')
+    subject_id = request.GET.get('subjectFilter')
+    date_start = request.GET.get('dateStartFilter')
+    date_end = request.GET.get('dateEndFilter')
 
-    # Initialize filters
-    filters = Q(learner__school__in=schools)
+    # Base queryset
+    queryset = SchoolProgress.objects.all()
 
-    # Apply date filters if provided
-    if start_date and end_date:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-        filters &= Q(created_at__range=[start_date, end_date])
+    # Apply filters
+    if school_id:
+        queryset = queryset.filter(school_id=school_id)
+    if subject_id:
+        queryset = queryset.filter(subject_id=subject_id)
+    if date_start:
+        start_date = parse_date(date_start)
+        queryset = queryset.filter(date__gte=start_date)
+    if date_end:
+        end_date = parse_date(date_end)
+        queryset = queryset.filter(date__lte=end_date)
 
-    # Apply subject filters if provided
-    if subject:
-        filters &= Q(subject__name=subject)
+    # Aggregated metrics
+    total_schools = School.objects.count()
+    average_district_performance = queryset.aggregate(Avg('performance_score'))['performance_score__avg'] or 0
+    reports_submitted = queryset.count()
 
-    # Query learner progress with the applied filters
-    learner_progress = LearnerProgress.objects.filter(filters)
+    # Data for table
+    school_progress_list = queryset.select_related('school', 'subject', 'concept')
 
-    # Aggregated data analytics for the district
-    total_learners = learner_progress.values('learner').distinct().count()
-    avg_grasp_level = learner_progress.aggregate(avg_grasp=Avg('grasp_level'))
-    learners_by_grasp_level = learner_progress.values('grasp_level').annotate(count=Count('id'))
+    # Data for charts (ensure 0 for schools with no data)
+    school_performance = queryset.values('school__name').annotate(
+        average_performance=Avg('performance_score')
+    ).order_by('school__name')
+    
+    district_performance = queryset.values('date__week').annotate(
+        average_performance=Avg('performance_score')
+    ).order_by('date__week')
 
-    # Retrieve subjects taught in the district
-    subjects = Subject.objects.filter(
-        id__in=learner_progress.values_list('subject_id', flat=True)
-    ).distinct()
+    # Prepare chart data
+    school_labels = [sp['school__name'] for sp in school_performance]
+    school_data = [sp['average_performance'] or 0 for sp in school_performance]  # Handle None cases
+
+    district_labels = [f"Week {dp['date__week']}" for dp in district_performance]
+    district_data = [dp['average_performance'] or 0 for dp in district_performance]  # Handle None cases
 
     context = {
-        'schools': schools,
-        'total_learners': total_learners,
-        'avg_grasp_level': avg_grasp_level['avg_grasp'],
-        'learners_by_grasp_level': learners_by_grasp_level,
-        'subjects': subjects,
+        'schools': School.objects.all(),
+        'subjects': Subject.objects.all(),
+        'total_schools': total_schools,
+        'average_district_performance': average_district_performance,
+        'reports_submitted': reports_submitted,
+        'school_progress_list': school_progress_list,
+        'school_labels': school_labels,
+        'school_data': school_data,
+        'district_labels': district_labels,
+        'district_data': district_data,
     }
-    return render(request, 'onCourse/district_dashboard.html', context)
+    return render(request, 'onCourse/district_views.html', context)
 
+def submit_answers(request):
+    concept = get_object_or_404(Concept)
+    # Retrieve the Learner object associated with the logged-in user
+    learner = get_object_or_404(Learner)
+
+    if request.method == 'POST':
+        q1_answer = request.POST.get('question1')
+        q2_answer = request.POST.get('question2')
+
+        # Assuming each question has an associated correct answer
+        q1_correct = concept.question1.correct_choice.id
+        q2_correct = concept.question2.correct_choice.id
+
+        correct_count = 0
+        if q1_answer == str(q1_correct):
+            correct_count += 1
+        if q2_answer == str(q2_correct):
+            correct_count += 1
+        # Determine the grade based on correct answers
+        if correct_count == 0:
+            grade = 'low'
+        elif correct_count == 1:
+            grade = 'medium'
+        else:
+            grade = 'high'
+
+        # Save the grade
+        LearnerGrade.objects.create(
+            learner=learner,
+            concept=concept,
+            grade=grade
+        )
+        return redirect('onCourse:learner_grades')  # Redirect to the learner's grades page after submission
+    context = {'concept': concept}
+    return render(request, 'onCourse/submit_answers.html', context)
+    
+def concept_detail(request, concept_id):
+    concept = get_object_or_404(Concept, pk=concept_id)
+    questions = Question.objects.filter(concept=concept)
+    context = {'concept': concept, 'questions': questions}
+    return render(request, 'onCourse/concept_detail.html', context)
+
+def concept_list(request):
+    concepts = Concept.objects.all()
+    context = {'concepts': concepts}
+    return render(request, 'onCourse/concept_list.html', context)
+
+def learner_grade(request):
+    learner = request.user.learner
+    grades = LearnerGrade.objects.filter(learner=learner)
+
+    context = {
+        'grades': grades,
+    }
+    return render(request, 'onCourse/learner_grade.html', context)
+
+# Initialize Africa's Talking
+africastalking.initialize(username=settings.AFRICASTALKING_USERNAME, api_key=settings.AFRICASTALKING_API_KEY)
+ussd = africastalking.USSD
+
+@csrf_exempt
+def ussd_callback(request):
+    session_id = request.POST.get('sessionId')
+    service_code = request.POST.get('serviceCode')
+    phone_number = request.POST.get('phoneNumber')
+    text = request.POST.get('text', '').strip()
+
+    response = ""
+
+    if text == "":
+        response = "CON Welcome to the Progress Report Service\n"
+        response += "1. Get Child's Progress Report\n"
+    elif text == "1":
+        # Retrieve child's progress report
+        progress = LearnerProgress.objects.filter(parent__phone_number=phone_number).last()
+        if progress:
+            response = f"END Progress Report:\nSubject: {progress.subject.name}\nConcept: {progress.concept.name}\nGrasp Level: {progress.get_grasp_level_display()}"
+        else:
+            response = "END No progress report found for your child."
+
+    return HttpResponse(response, content_type="text/plain")
+
+@csrf_exempt
+def whatsapp_callback(request):
+    from_number = request.POST.get('From')
+    body = request.POST.get('Body').strip().lower()
+
+    response = MessagingResponse() 
+
+    if body == "report":
+        # Retrieve child's progress report
+        progress = LearnerProgress.objects.filter(parent__phone_number=from_number.replace("whatsapp:", "")).last()
+        if progress:
+            message = f"Progress Report:\nSubject: {progress.subject.name}\nConcept: {progress.concept.name}\nGrasp Level: {progress.get_grasp_level_display()}"
+        else:
+            message = "No progress report found for your child."
+        response.message(message)
+    else:
+        response.message("Send 'report' to get your child's progress report.")
+
+    return HttpResponse(str(response), content_type="text/xml")
 

@@ -1,0 +1,10 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="report_image">Upload Report Image:</label>
+    <input type="file" name="report_image" id="report_image" required>
+    <button type="submit">Upload</button>
+</form>
+{% endblock page_content %}

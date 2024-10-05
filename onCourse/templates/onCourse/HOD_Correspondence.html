@@ -1,0 +1,25 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<h3>Messages from HODs</h3>
+<table id="messages-table">
+    <thead>
+        <tr>
+            <th>HOD</th>
+            <th>Subject</th>
+            <th>Message</th>
+            <th>Sent At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for message in messages %}
+        <tr>
+            <td>{{ message.hod }}</td>
+            <td>{{ subject.name }}</td>
+            <td>{{ message.message }}</td>
+            <td>{{ message.sent_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock page_content %}

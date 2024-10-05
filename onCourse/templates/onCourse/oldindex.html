@@ -1,0 +1,10 @@
+{% extends 'onCourse/base.html' %}
+{% load static %}
+{% block page_header %}
+    <div class="jumbotron">
+        <h3 class="display-3">Stay on track.</h3>
+        <p class="lead">Data and Analytics to improve learning outcomes.
+            <a href="{% url 'onCourse:submit_answers' %}">Submit Answers</a>
+        </p>
+    </div>
+{% endblock page_header %}

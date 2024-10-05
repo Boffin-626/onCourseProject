@@ -1,0 +1,267 @@
+{% extends 'onCourse/base.html' %}
+{% block page_header %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOD Dashboard</title>
+{% endblock page_header %}   
+{% block page_content %}
+<div class="container-fluid">
+    <h4 class="dashboard-title text-white">HOD Analytics</h4>
+
+    <!-- Search and Filter Section -->
+    <div class="row filter-section">
+        <div class="col-md-6">
+            <input type="text" id="searchBox" class="form-control" placeholder="Search by learner name...">
+        </div>
+        <div class="col-md-3">
+            <select id="subjectFilter" class="form-control">
+                <option value="">Filter by Subject</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.name }}">{{ subject.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="graspLevelFilter" class="form-control">
+                <option value="">Filter by Grasp Level</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Total Learners Card -->
+        <div class="col-md-4 mt-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Learners</h5>
+                    <p class="card-text">{{ total_learners }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Performance Card -->
+        <div class="col-md-4 mt-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Average Performance</h5>
+                    <p class="card-text">{{ average_performance }}%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Submitted Card -->
+        <div class="col-md-4 mt-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Reports Submitted</h5>
+                    <p class="card-text">{{ reports_submitted }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Export Data Button -->
+    <div class="text-right mb-3">
+        <button class="btn btn-danger" onclick="exportTableToCSV('learner_performance.csv')">Export Data</button>
+    </div>
+    <!-- Detailed Learner Performance Table -->
+    <div class="table-wrapper">
+        <h3 class="mt-4 text-white">Detailed Learner Performance</h3>
+        <table class="table table-striped table-bordered" id="learnerPerformanceTable">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Learner</th>
+                    <th>Subject</th>
+                    <th>Concept</th>
+                    <th>Grasp Level</th>
+                    <th>Teacher Comments</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for progress in learner_progress %}
+                <tr>
+                    <td class="text-info">{{ progress.learner.name }}</td>
+                    <td class="text-info">{{ progress.subject.name }}</td>
+                    <td class="text-info">{{ progress.concept.name }}</td>
+                    <td class="text-info">{{ progress.get_grasp_level_display }}</td>
+                    <td>
+                        {% for comment in progress.teachercomment_set.all %}
+                            {{ comment.comment }}<br>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Charts/Graphs Section -->
+    <div class="row chart-container">
+        <div class="col-md-6">
+            <h3 class="text-white">Subject Comparison (Bar Chart)</h3>
+            <canvas id="subjectComparisonChart"></canvas>
+        </div>
+        <div class="col-md-6">
+            <h3 class="text-white">Performance Trends (Line Chart)</h3>
+            <canvas id="performanceTrendsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Notifications/Alerts Section -->
+    <div class="alert alert-warning mt-5" role="alert">
+        <h4 class="alert-heading">Notifications</h4>
+        <p>There are {{ underperforming_learners }} learners who are underperforming in multiple subjects.</p>
+        <p>Check the detailed performance report for more information.</p>
+    </div>
+
+    <!-- Comparison Section -->
+    <div class="row mt-5 text-white">
+        <div class="col-md-12">
+            <h3>Comparison Section</h3>
+            <p>Select two subjects or classes to compare their performance:</p>
+            <!-- Implement subject/class comparison dropdowns and comparison logic -->
+        </div>
+    </div>
+</div>
+<!-- Button to trigger modal -->
+<button type="button" class="btn btn-info mt-3" data-toggle="modal" data-target="#messageModal">
+  Send Feedback to Teacher
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="messageModalLabel">Send Feedback to Teacher</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body bg-dark">
+              <form method="post" action="{% url 'onCourse:hod_dashboard' %}">
+                  {% csrf_token %}
+                  {{ form.as_p }}
+                  <button type="submit" class="btn btn-primary">Send Message</button>
+              </form>
+          </div>
+      </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer mt-4">
+    <div class="container">
+        <div class="row">
+            <!-- Column 1 -->
+            <div class="col-md-3">
+                <h5>About Us</h5>
+                <p>Serving data and analytics all day - everyday.</p>
+            </div>
+            <!-- Column 2 -->
+            <div class="col-md-3">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Impact</a></li>
+                    <li><a href="#">Resources</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <!-- Column 3 -->
+            <div class="col-md-3">
+                <h5>Contact Information</h5>
+                <p>Address: Remote</p>
+                <p>Email: email@onCourse.co.za</p>
+                <p>Phone: 013 656 2231</p>
+            </div>
+            <!-- Column 4 -->
+            <div class="col-md-3">
+                <h5>Follow Us</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Facebook</a></li>
+                    <li><a href="#">Twitter</a></li>
+                    <li><a href="#">Instagram</a></li>
+                    <li><a href="#">LinkedIn</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Chart.js code remains the same as before
+    // Additional features like Search, Filter, and Export to CSV
+
+    // Search functionality
+    document.getElementById('searchBox').addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+        const tableRows = document.querySelectorAll('#learnerPerformanceTable tbody tr');
+        tableRows.forEach(row => {
+            const learnerName = row.cells[0].textContent.toLowerCase();
+            if (learnerName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Filter by Subject
+    document.getElementById('subjectFilter').addEventListener('change', function() {
+        const filterValue = this.value;
+        const tableRows = document.querySelectorAll('#learnerPerformanceTable tbody tr');
+        tableRows.forEach(row => {
+            const subject = row.cells[1].textContent;
+            if (subject === filterValue || filterValue === '') {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Filter by Grasp Level
+    document.getElementById('graspLevelFilter').addEventListener('change', function() {
+        const filterValue = this.value;
+        const tableRows = document.querySelectorAll('#learnerPerformanceTable tbody tr');
+        tableRows.forEach(row => {
+            const graspLevel = row.cells[3].textContent.toLowerCase();
+            if (graspLevel === filterValue || filterValue === '') {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Export table to CSV
+    function exportTableToCSV(filename) {
+        let csv = [];
+        const rows = document.querySelectorAll("#learnerPerformanceTable tr");
+        rows.forEach(row => {
+            const cols = row.querySelectorAll("td, th");
+            const rowData = [];
+            cols.forEach(col => rowData.push(col.innerText));
+            csv.push(rowData.join(","));
+        });
+
+        // Download CSV
+        const csvFile = new Blob([csv.join("\n")], { type: 'text/csv' });
+        const downloadLink = document.createElement("a");
+        downloadLink.download = filename;
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+    }
+</script>
+{% endblock page_content %}
+</html>

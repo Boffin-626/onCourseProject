@@ -1,32 +1,36 @@
 # forms.py
 from django import forms
-from .models import LearnerProgress, ConceptGrasp, USSDRequest, WhatsAppRequest, TeacherComment, Subject, Concept
+from .models import *
+
+class LearnerInfoForm(forms.ModelForm):
+    class Meta:
+        model = LearnerInfo
+        fields = ['learner_name', 'date_of_birth', 'gender', 'grade', 'extra_tutorials', 'previous_school', 'address', 'contact_number', 'email']
 
 class LearnerProgressForm(forms.ModelForm):
     class Meta:
         model = LearnerProgress
-        fields = ['learner', 'subject', 'concept', 'grasp_level', 'period_start', 'period_end']
+        fields = ['concept', 'grasp_level']
         widgets = {
-            'period_start': forms.DateInput(attrs={'type': 'date'}),
-            'period_end': forms.DateInput(attrs={'type': 'date'}),
+            'grasp_level': forms.RadioSelect(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High')]),
         }
 
-class ConceptGraspForm(forms.ModelForm):
-    subject = forms.ModelChoiceField(queryset=Subject.objects.all(), required=True)
-    concept = forms.ModelChoiceField(queryset=Concept.objects.none(), required=True)
-    
-    class Meta:
-        model = ConceptGrasp
-        fields = ['subject', 'concept', 'grasped']
-
     def __init__(self, *args, **kwargs):
-        subject_id = kwargs.pop('subject_id', None)
-        super(ConceptGraspForm, self).__init__(*args, **kwargs)
-        if subject_id:
-            self.fields['concept'].queryset = Concept.objects.filter(subject_id=subject_id)
-        else:
-            self.fields['concept'].queryset = Concept.objects.none()
+        super(LearnerProgressForm, self).__init__(*args, **kwargs)
+        self.fields['concept'].queryset = Concept.objects.none()
 
+        if 'subject' in self.data:
+            try:
+                subject_id = int(self.data.get('subject'))
+                self.fields['concept'].queryset = Concept.objects.filter(subject_id=subject_id).order_by('name')
+            except (ValueError, TypeError):
+                pass  # invalid input from the client; ignore and fallback to empty concept queryset
+        elif self.instance.pk:
+            self.fields['concept'].queryset = self.instance.subject.concept_set.order_by('name')
+
+class SchoolReportUploadForm(forms.Form):
+    report_image = forms.ImageField()
+    
 class USSDRequestForm(forms.ModelForm):
     class Meta:
         model = USSDRequest
@@ -43,4 +47,14 @@ class TeacherCommentForm(forms.ModelForm):
         fields = ['comment']
         widgets = {
             'comment': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Add your comment here...'}),
+        }
+
+class HODMessageForm(forms.ModelForm):
+    class Meta:
+        model = HODMessage
+        fields = ['teacher', 'subject', 'message']
+        widgets = {
+            'teacher': forms.Select(attrs={'class': 'form-control'}),
+            'subject': forms.Select(attrs={'class': 'form-control'}),
+            'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
         }

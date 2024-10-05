@@ -1,0 +1,47 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_header %}
+{% endblock %}
+
+{% block page_content %}
+    <p class="text-white">Welcome to your dashboard. Here, you can update your learning progress, view your reports, and more.</p>
+    <a href="{% url 'onCourse:learner_progress_form' %}" class="btn btn-warning mb-4">Progress Reports</a>
+    <a href="#" class="btn btn-danger mb-4 ml-3">See Notifications</a>
+    <a href="{% url 'onCourse:calendar' %}" class="btn btn-primary mb-4 ml-3">School Calendar</a>
+    <a href="#" class="btn btn-danger mb-4 ml-3">Bursaries</a>
+    <a href="#" class="btn btn-info mb-4 ml-3">Tutorials</a>
+    <a href="{% url 'onCourse:add_learner_info' %}" class="btn btn-info mb-4 ml-3">Your Info</a>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-center text-dark">My Progress</h5>
+                        <p class="card-text text-dark">Update your progress on different subjects and concepts.</p>
+                        <a href="{% url 'onCourse:learner_progress_form' %}" class="btn btn-light text-dark">Progress Update</a>
+                        <a href="{% url 'onCourse:upload_report' %}" class="btn btn-light text-dark">Upload Report</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-dark">Learning Rewards</h5>
+                        <p class="card-text text-dark">Check out the rewards you have earned for your learning achievements.</p>
+                        <a href="{% url 'onCourse:my_rewards' %}" class="btn btn-light text-dark">View Rewards</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-3 mb-4">
+                <div class="card bg-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-dark">Learning Materials</h5>
+                        <p class="card-text text-dark">Access all the learning materials you need to excel in your studies.</p>
+                        <a href="{% url 'onCourse:learning_materials' %}" class="btn btn-light">Learning Materials</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock page_content %}
+

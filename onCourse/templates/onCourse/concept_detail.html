@@ -1,0 +1,20 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<h4>{{ concept.name }}</h4>
+<form method="POST" action="{% url 'submit_answers' %}">
+    {% csrf_token %}
+    {% for question in questions %}
+    <div>
+        <p>{{ question.question_text }}</p>
+        {% for answer in question.answer_set.all %}
+        <label>
+            <input type="radio" name="question_{{ question.id }}" value="{{ answer.id }}">
+            {{ answer.answer_text }}
+        </label>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    <button type="submit">Submit</button>
+</form>
+{% endblock page_content %}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Learner, LearnerProgress, Parent, School, Teacher, TeacherComment, ConceptGrasp, USSDRequest, WhatsAppRequest, HOD, Subject, Concept, District, DistrictOffice
+from .models import *
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -14,6 +14,7 @@ class LearnerAdmin(admin.ModelAdmin):
     list_filter = ['school']
 
 admin.site.register(LearnerProgress)
+admin.site.register(SchoolProgress)
 
   
 
@@ -62,8 +63,16 @@ class HODAdmin(admin.ModelAdmin):
     list_display = ['user', 'school']
     search_fields = ['user__username', 'school__name']
     list_filter = ['school']
-
+    
+admin.site.register(LearnerInfo)
 admin.site.register(Subject)
 admin.site.register(Concept)
 admin.site.register(District)
 admin.site.register(DistrictOffice)
+admin.site.register(Question)
+admin.site.register(Answer)
+admin.site.register(LearnerGrade)
+admin.site.register(HODMessage)
+admin.site.register(SchoolEvent)
+admin.site.register(LearnerPerformance)
+admin.site.register(PerformanceAnalytics)

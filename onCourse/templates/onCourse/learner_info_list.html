@@ -1,0 +1,31 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<div class="container">
+    <h2 class="text-info">Learner Information List</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date of Birth</th>
+                <th>Gender</th>
+                <th>Grade</th>
+                <th>Contact Number</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for learner in learners %}
+            <tr>
+                <td>{{ learner.learner_name }}</td>
+                <td>{{ learner.date_of_birth }}</td>
+                <td>{{ learner.gender }}</td>
+                <td>{{ learner.grade }}</td>
+                <td>{{ learner.contact_number }}</td>
+                <td>{{ learner.email }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock page_content %}

@@ -1,0 +1,12 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<h4>Concepts</h4>
+<ul>
+    {% for concept in concepts %}
+    <li><a href="{% url 'concept_detail' %}">{{ concept.name }}</a></li>
+    {% empty %}
+    <li>No concepts found.</li>
+    {% endfor %}
+</ul>
+{% endblock page_content %}

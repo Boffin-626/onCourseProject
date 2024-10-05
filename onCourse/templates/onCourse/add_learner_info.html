@@ -1,0 +1,66 @@
+{% extends "onCourse/base.html" %}
+
+{% block page_content %}
+<div class="container mt-5 d-flex justify-content-center">
+    <div class="card p-4 shadow-sm" style="width: 50%; max-width: 500px;">
+        <h2 class="text-center mb-4">Add Learner Info</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group mb-3">
+                <label for="learner_name" class="form-label">Learner Name</label>
+                <select class="form-control" id="learner_name" name="learner_name">
+                    {% for learner in learners %}
+                        <option value="{{ learner.id }}">{{ learner.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-control" id="gender" name="gender" required>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="non-binary">Non-binary</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="grade" class="form-label">Grade</label>
+                <input type="text" class="form-control" id="grade" name="grade" required>
+            </div>
+
+            <div class="form-group form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="extra_tutorials" name="extra_tutorials">
+                <label class="form-check-label" for="extra_tutorials">Extra Tutorials</label>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="previous_school" class="form-label">Previous School</label>
+                <input type="text" class="form-control" id="previous_school" name="previous_school" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="contact_number" class="form-label">Contact Number</label>
+                <input type="text" class="form-control" id="contact_number" name="contact_number" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Submit</button>
+        </form>
+    </div>
+</div>
+{% endblock page_content %}

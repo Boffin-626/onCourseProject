@@ -2,7 +2,7 @@
 {% extends 'onCourse/base.html' %}
 
 {% block page_content %}
-  <h2>{{ learner.name }}'s Progress Details</h2>
+  <h4>{{ learner.name }}'s Progress Details</h4>
   <ul>
     {% for item in progress %}
       <li>
@@ -15,5 +15,5 @@
     {% endfor %}
   </ul>
   <!-- Make sure to pass the learner.id here -->
-  <a href="{% url 'onCourse:learner_progress_form' learner.id %}">Update Progress</a>
+  <a href="{% url 'onCourse:learner_progress_form' %}">Update Progress</a>
 {% endblock %}

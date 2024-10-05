@@ -1,115 +1,39 @@
 {% extends 'onCourse/base.html' %}
 
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    #report {
-      font-family: Arial, Helvetica, sans-serif;
-      border-collapse: collapse;
-      width: 100%;
-    }
-    
-    #report td, #report th {
-      border: 1px solid #ddd;
-      padding: 8px;
-    }
-    
-    #report tr:nth-child(even){background-color: rgb(15, 24, 41);}
-    
-    #report tr:hover {background-color: #ddd;}
-    
-    #report th {
-      padding-top: 12px;
-      padding-bottom: 12px;
-      text-align: left;
-      background-color: rgb(15, 24, 41);;
-      color: white;
-    }
-  </style>
-</head>
-<body>
+{% block page_header %}
+<h3 class="text-light">Head of Department</h3>
+{% endblock page_header %}
+
 {% block page_content %}
-<h2>HOD Dashboard - {{ school.name }}</h2>
-
-<!-- Filter Form -->
-<form method="get">
-  <label for="start_date">Start Date:</label>
-  <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
-    
-  <label for="end_date">End Date:</label>
-  <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
-
-  <label for="subject">Subject:</label>
-  <select id="subject" name="subject">
-    <option value="">All Subjects</option>
-    {% for subject in subjects %}
-    <option value="{{ subject.id }}" {% if request.GET.subject == subject.id|stringformat:"s" %}selected{% endif %}>
-    {{ subject.name }}
-    </option>
-    {% endfor %}
-  </select>
-
-    <button type="submit">Filter</button>
-</form>
-
-<!-- Grasp Level Distribution -->
-<h3>Grasp Level Distribution</h3>
-<table id="report">
-    <tr>
-        <th>Grasp Level</th>
-        <th>Count</th>
-    </tr>
-    {% for level in grasp_level_distribution %}
-        <tr>
-            <td>{{ level.grasp_level }}</td>
-            <td>{{ level.count }}</td>
-        </tr>
-    {% endfor %}
-</table>
-
-<!-- Subject-wise Grasp Levels -->
-<h3>Grasp Levels by Subject</h3>
-<table id="report">
-    <tr>
-        <th>Subject</th>
-        <th>Low</th>
-        <th>Medium</th>
-        <th>High</th>
-    </tr>
-      {% for subject in subjects %}
-        <tr>
-            <td>{{ subject.name }}</td>
-            <td>{{ subject.grasp_level}}</td>
-            <td>{{ subject.grasp_levels}}</td>
-            <td>{{ subject.grasp_levels}}</td>
-        </tr>
-      {% endfor %}
-</table>
-
-<!-- Learner Progress Records -->
-<h3>Learner Progress Records</h3>
-<table id="report">
-    <tr>
-        <th>Learner</th>
-        <th>Subject</th>
-        <th>Concept</th>
-        <th>Grasp Level</th>
-        <th>Period</th>
-        <th>Date Recorded</th>
-    </tr>
-    {% for progress in learner_progress %}
-        <tr>
-            <td>{{ progress.learner.name }}</td>
-            <td>{{ progress.subject.name }}</td>
-            <td>{{ progress.concept.name }}</td>
-            <td>{{ progress.get_grasp_level_display }}</td>
-            <td>{{ progress.period_start }} to {{ progress.period_end }}</td>
-            <td>{{ progress.created_at|date:"Y-m-d" }}</td>
-        </tr>
-    {% endfor %}
-</table>
-
+<div class="container my-4">
+    <div class="row text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Department Overview</h5>
+                    <p class="card-text">Access and manage all subjects and learner progress under your department.</p>
+                    <a href="{% url 'onCourse:hod_views' %}" class="btn btn-primary">View Department</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Learner Performance</h5>
+                    <p class="card-text">Track and analyze the performance of learners within your department.</p>
+                    <a href="#" class="btn btn-primary">View Performance</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Teacher Reports</h5>
+                    <p class="card-text">Review reports submitted by teachers and provide feedback.</p>
+                    <a href="#" class="btn btn-primary">View Reports</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock page_content %}
-</body>
-</html>

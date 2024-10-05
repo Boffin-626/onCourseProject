@@ -1,0 +1,23 @@
+{% extends 'onCourse/base.html' %}
+
+{% block page_content %}
+<h4>Your Grades</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Concept</th>
+            <th>Subject</th>
+            <th>Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for grade in grades %}
+        <tr>
+            <td>{{ grade.concept.name }}</td>
+            <td>{{ grade.concept.subject.name }}</td>
+            <td>{{ grade.get_grade_display }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock page_content %}

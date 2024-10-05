@@ -1,0 +1,62 @@
+{% extends 'onCourse/base.html' %}
+{% block page_header %}
+<div class="row">
+    <h2 class="mb-4 text-center text-light">{{ parent.name }}'s Analytics</h2>
+</div>
+{% endblock page_header %}
+{% block page_content %}
+<div class="jumbotron bg-light">
+  <p style="text-align:center; padding: 5px;" class="text-dark">Last Term's Average %: 78 | <a href="#">Detailed Report</a>
+
+  <form method="GET" action="" class="text-light">
+      <label for="learner">Select Learner:</label>
+      <select name="learner" id="learner">
+          <option value="">All Learners</option>
+          {% for learner in learners %}
+              <option value="{{ learner.id }}">{{ learner.name }}</option>
+          {% endfor %}
+      </select>
+
+      <label for="subject">Filter by Subject:</label>
+      <select name="subject" id="subject">
+          <option value="">All Subjects</option>
+          {% for progress in learner_progress %}
+              <option value="{{ progress.subject.name }}">{{ progress.subject.name }}</option>
+          {% endfor %}
+      </select>
+      
+      <label for="grasp_level">Filter by Grasp Level:</label>
+      <select name="grasp_level" id="grasp_level">
+          <option value="">All Levels</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+      </select> 
+      
+      <button type="submit">Apply Filters</button>
+  </form>
+
+  <table id="report">
+      <thead>
+          <tr>
+              <th>Learner</th>
+              <th>Subject</th>
+              <th>Concept</th>
+              <th>Grasp Level</th>
+              <th>Period</th>
+          </tr>
+      </thead>
+      <tbody>
+          {% for progress in learner_progress %}
+          <tr>
+              <td>{{ progress.learner.name }}</td>
+              <td>{{ progress.subject.name }}</td>
+              <td>{{ progress.concept.name }}</td>
+              <td>{{ progress.get_grasp_level_display }}</td>
+              <td>{{ progress.period_start }} - {{ progress.period_end }}</td>
+          </tr>
+          {% endfor %}
+      </tbody>
+  </table>
+</div>
+{% endblock page_content %}
